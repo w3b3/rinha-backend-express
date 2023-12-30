@@ -2,15 +2,30 @@
 
 - Node Express
 - Postgres
+- nginx
 
-## Setup network
+## Docker compose
+
+We use docker compose to initiate this project.
+```
+docker-compose up
+```
+## How to populate the DB with users
+
+Look into the `populate.sql` file for the correct syntax.
+
+```
+curl -X POST -H "Content-Type: application/json" -d "$JSON_DATA" "$BASE_URL"
+```
+
+## ~~Setup network~~
 Reference: https://docs.docker.com/get-started/07_multi_container/
 
 ```
 docker network create rinha-002 
 ```
 
-## Setup volume
+## ~~Setup volume~~
 
 ```
 docker volume create db-data
@@ -88,31 +103,26 @@ Check for dbs
 \conninfo
 SELECT * FROM your_table_name;
 ```
-### This is just testing the waters
+### init.sql
 
-Need to quickly add something to the database?
+The script contains the CREATE db and CREATE table statements. **Check the script for the correct syntax.**
 
 ```
-create table users (
-    id serial primary key, 
-    name VARCHAR(255) not null,
-    email VARCHAR(255) not null unique,
-    created_on TIMESTAMP not null default current_timestamp
+CREATE TABLE IF NOT EXISTS usuarios
+(
+    id
+               SERIAL
+        PRIMARY
+            KEY,
+    apelido
+               VARCHAR(32) NOT NULL unique,
+    nome      VARCHAR(100) NOT NULL,
+    nascimento      DATE NOT NULL,
+    stack     VARCHAR(32)[] CHECK (array_length(stack, 1) IS NULL OR NOT NULL = ALL(stack))
 );
-insert into users (name, email) values ('john', 'juba2@camaro.uk');
-select * from users;
 ```
 
-### Ops to insert data
-
-```
-curl -X POST -H "Content-Type: application/json" -d '{
-  "name": "new_user_name",
-  "email": "new_user_email@example.com"
-}' http://localhost:3000/users
-```
-
-## Stop a container
+### Stop a container
 
 ```
 docker stop 954e84af4d6e
