@@ -1,91 +1,76 @@
 #!/bin/bash
 
 # Define the base URL
-BASE_URL="http://localhost:3000/users"
+BASE_URL="http://localhost:1234/usuarios"
 
-# Function to generate a random name with at least 10 characters
-#generate_random_name() {
-  # Set a minimum length for the random name
-#  MIN_LENGTH=10
+generate_random_date() {
+    year=$((RANDOM % (2023-1900+1) + 1900))   # Random year between 1990 and 2023
+    month=$((RANDOM % 12 + 1))                # Random month between 1 and 12
+    day=$((RANDOM % 31 + 1))                  # Random day between 1 and 28 (assuming all months have 28 days)
 
-  # Initialize an empty string for the name
-#  NAME=""
-
-  # Loop until the name has at least 10 characters
-#  while [ ${#NAME} -lt $MIN_LENGTH ]; do
-    # Use /dev/urandom to generate random bytes, then convert to base64 to get ASCII characters
-    # Use tr to remove characters that are not letters
-#    NEW_CHAR=$(head /dev/urandom | tr -dc 'a-zA-Z')
-
-    # Append the new character to the name
-#    NAME="$NAME$NEW_CHAR"
-#  done
-
-#  echo "$NAME"
-#}
-
-# Function to convert a number to words
-number_to_words() {
-  local num=$1
-
-# check if number is an integer and if not, make it integer
-  if [[ $num =~ ^[0-9]+$ ]]; then
-    num=$num
-  else
-    num=$(echo $num | cut -d'.' -f1)
-  fi
-
-# fix error saying "integer expression expected"
-  if ! [[ "$num" =~ ^[0-9]+$ ]]; then
-    num=0
-  fi
-
-  # Define arrays for words
-  words=(zero one two three four five six seven eight nine ten eleven twelve)
-
-  if [ $num -lt 12 ]; then
-    echo "${words[$num]}"
-  else
-#    make a random elements from array
-    echo "${words[$((RANDOM % 12))]}"
-#    echo "${words[$RANDOM % 12]}"
-#    echo "${words[$num]}"
-  fi
+# IF DAY OR MONTH IS A SINGLE DIGIT, ADD A ZERO BEFORE IT
+    if [ $month -lt 10 ]; then
+        month="0$month"
+    fi
+    if [ $day -lt 10 ]; then
+        day="0$day"
+    fi
+    echo "$year"-"$month"-"$day"
 }
 
-# Function to create a unique string with the literal spelling of time components
+generate_uuid() {
+#    uuid=$(cat /proc/sys/kernel/random/uuid)
+    uuid=$(uuidgen)
+    echo "${uuid:0:32}"
+}
+
+# function that returns a random letter from the alphabet
+random_letter() {
+    alphabet="abcdefghijklmnopqrstuvwxyz"
+    echo ${alphabet:$((RANDOM % 26)):1}
+}
+
+#function that returns a random string of 10 letters
 create_unique_string() {
-  # Get the current time components
-  HOUR=$(date +"%H")
-  MINUTE=$(date +"%M")
-  SECOND=$(date +"%S")
-  NANOSECOND=$(date +"%N")
-
-  # Convert numeric values to words
-  HOUR_WORD=$(number_to_words $HOUR)
-  MINUTE_WORD=$(number_to_words $MINUTE)
-  SECOND_WORD=$(number_to_words $SECOND)
-  NANOSECOND_WORD=$(number_to_words $NANOSECOND)
-
-  # Concatenate the words without spaces or numbers
-  UNIQUE_STRING="${HOUR_WORD}${MINUTE_WORD}${SECOND_WORD}${NANOSECOND_WORD}"
-
-  echo "$UNIQUE_STRING"
+    unique_string=""
+    for ((i=1; i<=10; i++)); do
+        unique_string="$unique_string$(random_letter)"
+    done
+#    echo "$unique_string"
+# limit the string to 10 characters
+    echo ${unique_string:0:32}
 }
+
+# function that return from 1 to 3 technologies from a list of 20 options
+create_technologies() {
+    technologies=("nodejs" "reactjs" "react-native" "angular" "vuejs" "java" "python" "c#" "c++" "c" "php" "ruby" "go" "swift" "kotlin" "scala" "rust" "haskell" "elixir" "clojure")
+    echo "${technologies[$((RANDOM % 20))]}"
+}
+
+# build a function that uses create_technologies and concatenates 3 technologies, not allowing duplicates
+concatenate_technologies() {
+    tech1=$(create_technologies)
+    tech2=$(create_technologies)
+    tech3=$(create_technologies)
+    while [ $tech1 == $tech2 ] || [ $tech1 == $tech3 ] || [ $tech2 == $tech3 ]; do
+        tech1=$(create_technologies)
+        tech2=$(create_technologies)
+        tech3=$(create_technologies)
+    done
+    echo "$tech1,$tech2,$tech3"
+}
+
 
 # Loop to create 10,000 users
-for ((i=1; i<=100; i++)); do
-  # Generate unique random name and email for each user
-  SHARED_STRING=$(create_unique_string)
-  NAME=$SHARED_STRING
-  EMAIL="$SHARED_STRING$i@tld.ca"
-
+for ((i=1; i<=1000; i++)); do
   # Create JSON data for the user
   JSON_DATA='{
-    "name": "'$NAME'",
-    "email": "'$EMAIL'"
+    "apelido": "'$(generate_uuid)'",
+    "nome": "'$(create_unique_string)' '$(create_unique_string)'",
+    "nascimento": "'$(generate_random_date)'",
+    "stack": "{'$(concatenate_technologies)'}"
   }'
-
   # Send the POST request using curl
   curl -X POST -H "Content-Type: application/json" -d "$JSON_DATA" "$BASE_URL"
+  echo "$JSON_DATA"
 done
