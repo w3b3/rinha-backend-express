@@ -4,6 +4,13 @@
 - Postgres
 - nginx
 
+## Endpoints
+
+- http://localhost:1234/
+- **POST** http://localhost:1234/usuarios
+- **TODO: GET** http://localhost:1234/usuarios/foo
+- **TODO: GET** http://localhost:1234/usuarios?t=marcelo
+
 ## Docker compose
 
 We use docker compose to initiate this project.
